@@ -362,13 +362,14 @@ var Quiet = (function () {
       samples / 4 + sampleBufferSize
     );
 
+    var transmitter;
     var dummy_osc;
+    var script_processor;
 
     // we'll start and stop transmitter as needed
     //   if we have something to send, start it
     //   if we are done talking, stop it
     var running = false;
-    var transmitter;
 
     // prevent races with callbacks on destroyed in-flight objects
     var destroyed = false;
@@ -399,7 +400,7 @@ var Quiet = (function () {
       if (transmitter === undefined) {
         // we have to start transmitter here because mobile safari wants it to be in response to a
         // user action
-        var script_processor =
+        script_processor =
           audioCtx.createScriptProcessor || audioCtx.createJavaScriptNode;
         // we want a single input because some implementations will not run a node without some kind of source
         // we want two outputs so that we can explicitly silence the right channel and no mixing will occur
@@ -420,8 +421,18 @@ var Quiet = (function () {
       if (destroyed) {
         return;
       }
-      dummy_osc.disconnect();
-      transmitter.disconnect();
+      if (dummy_osc) {
+        dummy_osc.disconnect();
+        dummy_osc = null;
+      }
+      if (transmitter) {
+        transmitter.disconnect();
+        transmitter = null;
+      }
+      if (script_processor) {
+        script_processor.disconnect();
+        script_processor = null;
+      }
       running = false;
     };
 
